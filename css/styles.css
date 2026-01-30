@@ -334,10 +334,15 @@ header {
     border-radius: 8px;
     margin-bottom: 0.5rem;
     transition: var(--transition);
+    gap: 0.5rem;
 }
 
 .selected-item:hover {
     background: var(--gray-200);
+}
+
+.selected-item-icon {
+    font-size: 1.5rem;
 }
 
 .selected-item-name {
@@ -469,6 +474,12 @@ header {
     border: 3px solid transparent;
     position: relative;
     overflow: hidden;
+}
+
+.option-icon {
+    font-size: 3rem;
+    text-align: center;
+    margin-bottom: 1rem;
 }
 
 .option-card::before {
@@ -864,4 +875,113 @@ footer {
 
 .pulse {
     animation: pulse 0.5s ease-in-out;
+}
+
+/* ===========================
+   Synergy System Styling
+   =========================== */
+.synergy-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-md);
+}
+
+.synergy-section h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+    margin-bottom: 1rem;
+}
+
+.synergy-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.synergy-item {
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.synergy-item.positive {
+    background: #e8f5e9;
+    border-color: var(--success-green);
+}
+
+.synergy-item.negative {
+    background: #ffebee;
+    border-color: var(--danger-red);
+}
+
+.synergy-item.secret-combo {
+    background: linear-gradient(135deg, #fff9e6 0%, #ffe5b4 100%);
+    border-color: var(--accent-gold);
+    box-shadow: 0 4px 8px rgba(244, 178, 35, 0.3);
+    animation: secretPulse 2s ease-in-out infinite;
+}
+
+@keyframes secretPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 8px rgba(244, 178, 35, 0.3);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 6px 12px rgba(244, 178, 35, 0.5);
+    }
+}
+
+.synergy-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.synergy-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.synergy-bonus {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.synergy-item.positive .synergy-bonus {
+    color: var(--success-green);
+}
+
+.synergy-item.negative .synergy-bonus {
+    color: var(--danger-red);
+}
+
+.synergy-item.secret-combo .synergy-bonus {
+    color: var(--accent-gold);
+    font-size: 1.3rem;
+}
+
+.synergy-reason {
+    font-size: 0.85rem;
+    color: var(--gray-700);
+    line-height: 1.4;
+    margin: 0;
 }

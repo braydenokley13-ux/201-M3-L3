@@ -1,5 +1,5 @@
 /**
- * Front Office Draft - Main Application Logic
+ * Front Office Draft - Main Application with Synergy System
  */
 
 // Application State
@@ -7,12 +7,15 @@ const state = {
     selectedOptions: [],
     totalCost: 0,
     scores: {
-        totalAwa: 0,
-        cultureMult: 0,
-        riskPenalty: 0,
-        scalabilityBonus: 0,
+        baseImpact: 0,
+        synergyBonus: 0,
+        antiSynergyPenalty: 0,
+        secretComboBonus: 0,
         finalScore: 0
-    }
+    },
+    activeSynergies: [],
+    activeAntiSynergies: [],
+    secretCombos: []
 };
 
 // DOM Elements
@@ -28,11 +31,11 @@ const elements = {
     budgetBar: document.getElementById('budget-bar'),
     clearButton: document.getElementById('clear-button'),
     evaluateButton: document.getElementById('evaluate-button'),
+    synergyList: document.getElementById('synergy-list'),
     scoreSection: document.getElementById('score-section'),
-    totalAwaDisplay: document.getElementById('total-awa'),
-    cultureMultDisplay: document.getElementById('culture-mult'),
-    riskPenaltyDisplay: document.getElementById('risk-penalty'),
-    scalabilityBonusDisplay: document.getElementById('scalability-bonus'),
+    baseImpactDisplay: document.getElementById('base-impact'),
+    synergyBonusDisplay: document.getElementById('synergy-bonus'),
+    antiSynergyDisplay: document.getElementById('anti-synergy'),
     finalScoreDisplay: document.getElementById('final-score'),
     successModal: document.getElementById('success-modal'),
     failureModal: document.getElementById('failure-modal'),
@@ -100,6 +103,7 @@ function createOptionCard(option) {
         <div class="option-card ${isSelected ? 'selected' : ''} ${wouldExceedBudget ? 'disabled' : ''}"
              data-id="${option.id}">
             <div class="selected-badge">✓</div>
+            <div class="option-icon">${option.icon}</div>
             <div class="option-header">
                 <h3 class="option-name">${option.name}</h3>
                 <span class="option-cost">$${option.cost.toFixed(1)}M</span>
@@ -107,20 +111,12 @@ function createOptionCard(option) {
             <p class="option-description">${option.description}</p>
             <div class="option-stats">
                 <div class="stat">
-                    <span class="stat-label">AWA</span>
-                    <span class="stat-value ${option.awa > 1 ? 'positive' : ''}">${option.awa.toFixed(1)}</span>
+                    <span class="stat-label">Impact</span>
+                    <span class="stat-value">${option.impact.toFixed(1)}</span>
                 </div>
                 <div class="stat">
-                    <span class="stat-label">Culture</span>
-                    <span class="stat-value ${option.culture > 1.1 ? 'positive' : ''}">${option.culture.toFixed(2)}x</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Risk</span>
-                    <span class="stat-value ${option.risk < 0 ? 'negative' : ''}">${option.risk.toFixed(2)}</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Scale</span>
-                    <span class="stat-value ${option.scalability > 0.15 ? 'positive' : ''}">${option.scalability.toFixed(1)}</span>
+                    <span class="stat-label">Type</span>
+                    <span class="stat-value">${option.category === 'hire' ? '👤 Hire' : '🔧 Tool'}</span>
                 </div>
             </div>
         </div>
@@ -149,8 +145,65 @@ function toggleOption(optionId) {
         state.totalCost += option.cost;
     }
 
+    checkSynergies(); // Check for new synergies!
     updateUI();
     saveState();
+}
+
+/**
+ * Check for synergies and anti-synergies
+ */
+function checkSynergies() {
+    state.activeSynergies = [];
+    state.activeAntiSynergies = [];
+    state.secretCombos = [];
+
+    const selectedData = state.selectedOptions.map(id => OPTIONS.find(opt => opt.id === id));
+
+    // Check regular synergies
+    SYNERGIES.forEach(synergy => {
+        if (synergy.minPeople) {
+            // Special case: Culture Lead needs minimum people
+            const hasCultureLead = state.selectedOptions.includes(9);
+            const peopleCount = selectedData.filter(opt => opt.category === 'hire').length;
+            if (hasCultureLead && peopleCount >= synergy.minPeople) {
+                state.activeSynergies.push(synergy);
+            }
+        } else {
+            // Regular synergy: check if all IDs are selected
+            const hasAll = synergy.ids.every(id => state.selectedOptions.includes(id));
+            if (hasAll) {
+                state.activeSynergies.push(synergy);
+            }
+        }
+    });
+
+    // Check anti-synergies
+    ANTI_SYNERGIES.forEach(antiSynergy => {
+        if (antiSynergy.tags) {
+            // Tag-based anti-synergy
+            const tagCount = selectedData.filter(opt =>
+                opt.tags.some(tag => antiSynergy.tags.includes(tag))
+            ).length;
+            if (tagCount >= antiSynergy.minCount) {
+                state.activeAntiSynergies.push(antiSynergy);
+            }
+        } else if (antiSynergy.ids) {
+            // ID-based anti-synergy
+            const hasAll = antiSynergy.ids.every(id => state.selectedOptions.includes(id));
+            if (hasAll) {
+                state.activeAntiSynergies.push(antiSynergy);
+            }
+        }
+    });
+
+    // Check secret combos
+    SECRET_COMBOS.forEach(combo => {
+        const hasAll = combo.ids.every(id => state.selectedOptions.includes(id));
+        if (hasAll) {
+            state.secretCombos.push(combo);
+        }
+    });
 }
 
 /**
@@ -159,6 +212,7 @@ function toggleOption(optionId) {
 function updateUI() {
     updateBudgetDisplay();
     updateSelectedList();
+    updateSynergyDisplay();
     renderOptions(); // Re-render to update card states
 }
 
@@ -203,11 +257,65 @@ function updateSelectedList() {
 
     elements.selectedItems.innerHTML = selectedOptionsData.map(option => `
         <div class="selected-item">
+            <span class="selected-item-icon">${option.icon}</span>
             <span class="selected-item-name">${option.name}</span>
             <span class="selected-item-cost">$${option.cost.toFixed(1)}M</span>
             <button class="remove-item" onclick="toggleOption(${option.id})" title="Remove">×</button>
         </div>
     `).join('');
+}
+
+/**
+ * Update synergy display
+ */
+function updateSynergyDisplay() {
+    if (state.activeSynergies.length === 0 && state.activeAntiSynergies.length === 0 && state.secretCombos.length === 0) {
+        elements.synergyList.innerHTML = '<p class="empty-state">Pick smart combos to unlock bonuses!</p>';
+        return;
+    }
+
+    let html = '';
+
+    // Show secret combos first (most exciting!)
+    state.secretCombos.forEach(combo => {
+        html += `
+            <div class="synergy-item secret-combo">
+                <div class="synergy-header">
+                    <span class="synergy-name">${combo.name}</span>
+                    <span class="synergy-bonus">+${combo.bonus.toFixed(1)}</span>
+                </div>
+                <p class="synergy-reason">${combo.message}</p>
+            </div>
+        `;
+    });
+
+    // Show regular synergies
+    state.activeSynergies.forEach(synergy => {
+        html += `
+            <div class="synergy-item positive">
+                <div class="synergy-header">
+                    <span class="synergy-name">✨ ${synergy.name}</span>
+                    <span class="synergy-bonus">+${synergy.bonus.toFixed(1)}</span>
+                </div>
+                <p class="synergy-reason">${synergy.reason}</p>
+            </div>
+        `;
+    });
+
+    // Show anti-synergies (warnings)
+    state.activeAntiSynergies.forEach(antiSynergy => {
+        html += `
+            <div class="synergy-item negative">
+                <div class="synergy-header">
+                    <span class="synergy-name">⚠️ ${antiSynergy.name}</span>
+                    <span class="synergy-bonus">${antiSynergy.penalty.toFixed(1)}</span>
+                </div>
+                <p class="synergy-reason">${antiSynergy.reason}</p>
+            </div>
+        `;
+    });
+
+    elements.synergyList.innerHTML = html;
 }
 
 /**
@@ -219,6 +327,9 @@ function clearAllSelections() {
     if (confirm('Are you sure you want to clear all selections?')) {
         state.selectedOptions = [];
         state.totalCost = 0;
+        state.activeSynergies = [];
+        state.activeAntiSynergies = [];
+        state.secretCombos = [];
         elements.scoreSection.classList.add('hidden');
         updateUI();
         saveState();
@@ -234,6 +345,17 @@ function evaluateBuild() {
         return;
     }
 
+    // Check requirements
+    const selectedData = state.selectedOptions.map(id => OPTIONS.find(opt => opt.id === id));
+    const peopleCount = selectedData.filter(opt => opt.category === 'hire').length;
+    const toolCount = selectedData.filter(opt => opt.category === 'tool').length;
+
+    if (peopleCount < REQUIREMENTS.minPeople || toolCount < REQUIREMENTS.minTools) {
+        alert(REQUIREMENTS.requiredMessage);
+        showFailureModal();
+        return;
+    }
+
     calculateScores();
     displayScores();
 
@@ -246,33 +368,28 @@ function evaluateBuild() {
 }
 
 /**
- * Calculate performance scores
+ * Calculate performance scores with new system
  */
 function calculateScores() {
-    const selectedOptionsData = state.selectedOptions.map(id =>
-        OPTIONS.find(opt => opt.id === id)
-    );
+    const selectedData = state.selectedOptions.map(id => OPTIONS.find(opt => opt.id === id));
 
-    // Total AWA
-    state.scores.totalAwa = selectedOptionsData.reduce((sum, opt) => sum + opt.awa, 0);
+    // Base Impact
+    state.scores.baseImpact = selectedData.reduce((sum, opt) => sum + opt.impact, 0);
 
-    // Culture Multiplier (average)
-    const totalCulture = selectedOptionsData.reduce((sum, opt) => sum + opt.culture, 0);
-    state.scores.cultureMult = selectedOptionsData.length > 0
-        ? totalCulture / selectedOptionsData.length
-        : 1.0;
+    // Synergy Bonus
+    state.scores.synergyBonus = state.activeSynergies.reduce((sum, synergy) => sum + synergy.bonus, 0);
 
-    // Risk Penalty (sum of negative values)
-    state.scores.riskPenalty = selectedOptionsData.reduce((sum, opt) => sum + opt.risk, 0);
+    // Secret Combo Bonus
+    state.scores.secretComboBonus = state.secretCombos.reduce((sum, combo) => sum + combo.bonus, 0);
 
-    // Scalability Bonus
-    state.scores.scalabilityBonus = selectedOptionsData.reduce((sum, opt) => sum + opt.scalability, 0);
+    // Total synergy (including secret combos)
+    const totalSynergyBonus = state.scores.synergyBonus + state.scores.secretComboBonus;
 
-    // Final Score = (Total AWA × Culture Multiplier) + Risk Penalty + Scalability Bonus
-    state.scores.finalScore =
-        (state.scores.totalAwa * state.scores.cultureMult) +
-        state.scores.riskPenalty +
-        state.scores.scalabilityBonus;
+    // Anti-Synergy Penalty
+    state.scores.antiSynergyPenalty = state.activeAntiSynergies.reduce((sum, anti) => sum + anti.penalty, 0);
+
+    // Final Score
+    state.scores.finalScore = state.scores.baseImpact + totalSynergyBonus + state.scores.antiSynergyPenalty;
 }
 
 /**
@@ -281,11 +398,12 @@ function calculateScores() {
 function displayScores() {
     elements.scoreSection.classList.remove('hidden');
 
-    elements.totalAwaDisplay.textContent = state.scores.totalAwa.toFixed(2);
-    elements.cultureMultDisplay.textContent = state.scores.cultureMult.toFixed(2) + 'x';
-    elements.riskPenaltyDisplay.textContent = state.scores.riskPenalty.toFixed(2);
-    elements.scalabilityBonusDisplay.textContent = state.scores.scalabilityBonus.toFixed(2);
-    elements.finalScoreDisplay.textContent = state.scores.finalScore.toFixed(2);
+    const totalSynergyBonus = state.scores.synergyBonus + state.scores.secretComboBonus;
+
+    elements.baseImpactDisplay.textContent = state.scores.baseImpact.toFixed(1);
+    elements.synergyBonusDisplay.textContent = '+' + totalSynergyBonus.toFixed(1);
+    elements.antiSynergyDisplay.textContent = state.scores.antiSynergyPenalty.toFixed(1);
+    elements.finalScoreDisplay.textContent = state.scores.finalScore.toFixed(1);
 
     // Animate final score
     elements.finalScoreDisplay.parentElement.classList.add('pulse');
@@ -376,6 +494,7 @@ function loadSavedState() {
             const data = JSON.parse(saved);
             state.selectedOptions = data.selectedOptions || [];
             state.totalCost = data.totalCost || 0;
+            checkSynergies();
             updateUI();
         }
     } catch (e) {
@@ -404,6 +523,9 @@ if (typeof window !== 'undefined') {
         clearSavedState,
         calculateScores,
         OPTIONS,
-        CONFIG
+        CONFIG,
+        SYNERGIES,
+        ANTI_SYNERGIES,
+        SECRET_COMBOS
     };
 }
