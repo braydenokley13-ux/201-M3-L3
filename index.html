@@ -15,16 +15,15 @@
         <div class="intro-content">
             <h1>Front Office Draft</h1>
             <div class="intro-instructions">
-                <h2>Welcome to the Front Office Draft.</h2>
-                <p>Your job is simple:</p>
+                <h2>Welcome to the Front Office Draft!</h2>
+                <p><strong>Your Mission:</strong></p>
                 <ul>
-                    <li>Choose the hires & tools you want to build your analytics and performance department.</li>
-                    <li>Stay under the <strong>$10M budget</strong>.</li>
-                    <li>Your selections will be evaluated automatically in the background.</li>
-                    <li>If your build meets the performance standard, a claim code will appear.</li>
-                    <li>Copy the claim code and submit it in the BOW Finish Form to earn XP.</li>
+                    <li>Build your dream analytics team</li>
+                    <li>Stay under your <strong>$10M budget</strong></li>
+                    <li>Pick smart combinations to unlock <strong>Team Synergy Bonuses!</strong></li>
+                    <li>Score high enough to earn your claim code</li>
                 </ul>
-                <p class="good-luck">Good luck. Build smart.</p>
+                <p class="good-luck">Let's build something amazing!</p>
             </div>
             <button id="start-button" class="btn btn-primary">START NOW</button>
         </div>
@@ -70,24 +69,27 @@
                         <button id="evaluate-button" class="btn btn-primary">Evaluate Build</button>
                     </div>
 
+                    <div class="synergy-section">
+                        <h3>Active Bonuses ✨</h3>
+                        <div id="synergy-list" class="synergy-list">
+                            <p class="empty-state">Pick smart combos to unlock bonuses!</p>
+                        </div>
+                    </div>
+
                     <div class="score-section hidden" id="score-section">
-                        <h3>Performance Metrics</h3>
+                        <h3>Your Score</h3>
                         <div class="metrics">
                             <div class="metric">
-                                <span class="metric-label">Total AWA:</span>
-                                <span class="metric-value" id="total-awa">0.0</span>
+                                <span class="metric-label">Base Impact:</span>
+                                <span class="metric-value" id="base-impact">0.0</span>
                             </div>
                             <div class="metric">
-                                <span class="metric-label">Culture Multiplier:</span>
-                                <span class="metric-value" id="culture-mult">1.0x</span>
+                                <span class="metric-label">Synergy Bonus:</span>
+                                <span class="metric-value positive" id="synergy-bonus">+0.0</span>
                             </div>
                             <div class="metric">
-                                <span class="metric-label">Risk Penalty:</span>
-                                <span class="metric-value" id="risk-penalty">0.0</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Scalability Bonus:</span>
-                                <span class="metric-value" id="scalability-bonus">0.0</span>
+                                <span class="metric-label">Conflicts:</span>
+                                <span class="metric-value negative" id="anti-synergy">-0.0</span>
                             </div>
                             <div class="metric final-score">
                                 <span class="metric-label">Final Score:</span>
@@ -143,10 +145,11 @@
             <div class="hint-section">
                 <p><strong>Hints:</strong></p>
                 <ul>
-                    <li>Balance high-impact hires with supportive tools</li>
-                    <li>Consider culture fit and risk factors</li>
-                    <li>Look for scalability opportunities</li>
-                    <li>Use your full budget wisely</li>
+                    <li>Look for combos that work well together (synergies!)</li>
+                    <li>You need at least 2 people AND 1 tool</li>
+                    <li>Some picks conflict with each other - watch out!</li>
+                    <li>Try to discover secret combo bonuses 🏆</li>
+                    <li>Don't just pick the expensive items!</li>
                 </ul>
             </div>
             <button id="close-failure-modal" class="btn btn-primary">Try Again</button>
