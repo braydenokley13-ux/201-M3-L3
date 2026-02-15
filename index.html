@@ -10,22 +10,48 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Skip to content for screen readers -->
+    <a href="#app" class="skip-link">Skip to main content</a>
+
+    <!-- Toast Container -->
+    <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
     <!-- Intro Overlay -->
-    <div id="intro-overlay" class="overlay active">
+    <div id="intro-overlay" class="overlay active" role="dialog" aria-modal="true" aria-labelledby="intro-title">
         <div class="intro-content">
-            <h1>Front Office Draft</h1>
+            <h1 id="intro-title">Front Office Draft</h1>
             <div class="intro-instructions">
-                <h2>Welcome to the Front Office Draft!</h2>
-                <p><strong>Your Mission:</strong></p>
-                <ul>
-                    <li>Build your dream analytics team</li>
-                    <li>Stay under your <strong>$10M budget</strong></li>
-                    <li>Pick smart combinations to unlock <strong>Team Synergy Bonuses!</strong></li>
-                    <li>Score high enough to earn your claim code</li>
-                </ul>
-                <p class="good-luck">Let's build something amazing!</p>
+                <p>You've just been named VP of Analytics for a professional sports franchise.</p>
+                <p>The GM has given you a <strong>$10 million budget</strong> to build your department from scratch. Your choices must work together as a system, not just a collection of talent.</p>
+                <p><strong>Your goal:</strong> Score <strong>7.0 or higher</strong> on the franchise's performance evaluation.</p>
+                <div class="intro-rules">
+                    <p><strong>Three rules:</strong></p>
+                    <ol>
+                        <li>Stay under $10M</li>
+                        <li>Hire at least 2 people AND acquire at least 1 tool</li>
+                        <li>Look for combinations that create value beyond the sum of their parts</li>
+                    </ol>
+                </div>
+                <p class="intro-hint"><em>Some combinations unlock hidden bonuses. Some create friction. Choose wisely.</em></p>
             </div>
-            <button id="start-button" class="btn btn-primary">START NOW</button>
+
+            <!-- Game Options -->
+            <div class="intro-options">
+                <label class="intro-toggle">
+                    <input type="checkbox" id="rival-toggle">
+                    <span class="toggle-label">Enable Rival GM (adds competition)</span>
+                </label>
+            </div>
+
+            <!-- Challenge Modes (hidden until first win) -->
+            <div id="challenge-modes-section" class="challenge-modes hidden">
+                <h3>Challenge Modes</h3>
+                <div class="challenge-grid" id="challenge-grid">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <button id="start-button" class="btn btn-primary">START DRAFT</button>
         </div>
     </div>
 
@@ -33,8 +59,14 @@
     <div id="app" class="hidden">
         <header>
             <div class="header-content">
-                <h1>Front Office Draft</h1>
-                <p class="subtitle">201 · M3 · Lesson 3</p>
+                <div class="header-left">
+                    <h1>Front Office Draft</h1>
+                    <p class="subtitle">201 · M3 · Lesson 3</p>
+                </div>
+                <div class="header-right">
+                    <span id="rival-badge" class="rival-badge hidden"></span>
+                    <span id="challenge-badge" class="challenge-badge hidden"></span>
+                </div>
             </div>
         </header>
 
@@ -53,14 +85,14 @@
                         </div>
                         <div class="budget-info">
                             <span class="spent-label">Spent: <span id="total-cost">$0.0M</span></span>
-                            <span class="limit-label">Limit: $10.0M</span>
+                            <span class="limit-label">Limit: <span id="budget-limit-display">$10.0M</span></span>
                         </div>
                     </div>
 
                     <div class="selected-section">
                         <h3>Selected Items <span id="selected-count">(0)</span></h3>
                         <div id="selected-items" class="selected-list">
-                            <p class="empty-state">No items selected yet</p>
+                            <p class="empty-state">Click a card to start building your department.</p>
                         </div>
                     </div>
 
@@ -70,9 +102,43 @@
                     </div>
 
                     <div class="synergy-section">
-                        <h3>Active Bonuses ✨</h3>
+                        <h3>Active Bonuses</h3>
                         <div id="synergy-list" class="synergy-list">
-                            <p class="empty-state">Pick smart combos to unlock bonuses!</p>
+                            <p class="empty-state">Select more items to see how they interact.</p>
+                        </div>
+                    </div>
+
+                    <!-- Secret Combo Discovery Tracker -->
+                    <div class="discovery-section">
+                        <h3>Secret Combos Found: <span id="combos-found-count">0</span> / 4</h3>
+                        <div id="discovery-list" class="discovery-list">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+
+                    <!-- How Scoring Works -->
+                    <div class="scoring-info-section">
+                        <button class="collapsible-header" id="scoring-info-toggle" aria-expanded="false">
+                            <span>How Scoring Works</span>
+                            <span class="collapse-icon">+</span>
+                        </button>
+                        <div class="collapsible-content hidden" id="scoring-info-content">
+                            <p><strong>How your build is scored:</strong></p>
+                            <p>Final Score = Base Impact + Synergy Bonuses - Conflict Penalties</p>
+                            <p><strong>Target: 7.0</strong></p>
+                            <p><em>Tip: Some three-item combinations unlock powerful secret bonuses.</em></p>
+                        </div>
+                    </div>
+
+                    <!-- GM Notes -->
+                    <div class="notes-section">
+                        <button class="collapsible-header" id="notes-toggle" aria-expanded="false">
+                            <span>GM Notes</span>
+                            <span class="collapse-icon">+</span>
+                        </button>
+                        <div class="collapsible-content hidden" id="notes-content">
+                            <textarea id="gm-notes" maxlength="500" placeholder="Jot down your strategy notes here..."></textarea>
+                            <div class="notes-char-count"><span id="notes-count">0</span>/500</div>
                         </div>
                     </div>
 
@@ -96,6 +162,36 @@
                                 <span class="metric-value" id="final-score">0.0</span>
                             </div>
                         </div>
+                        <button id="what-if-button" class="btn btn-secondary what-if-btn">What If?</button>
+                    </div>
+
+                    <!-- Stale score notice -->
+                    <div id="stale-score-notice" class="stale-notice hidden">
+                        <p><em>Build modified. Click "Evaluate Build" to see your updated score.</em></p>
+                    </div>
+
+                    <!-- What-If Panel -->
+                    <div id="what-if-panel" class="what-if-panel hidden">
+                        <h3>Explore a Swap</h3>
+                        <p class="what-if-subtitle">See how one change affects everything.</p>
+                        <div class="what-if-controls">
+                            <div class="what-if-select">
+                                <label for="swap-remove">Remove:</label>
+                                <select id="swap-remove"></select>
+                            </div>
+                            <div class="what-if-select">
+                                <label for="swap-add">Add:</label>
+                                <select id="swap-add"></select>
+                            </div>
+                        </div>
+                        <div id="swap-preview" class="swap-preview hidden">
+                            <div class="swap-delta" id="swap-delta"></div>
+                            <div class="swap-details" id="swap-details"></div>
+                        </div>
+                        <div class="what-if-actions">
+                            <button id="apply-swap" class="btn btn-primary btn-sm">Apply Swap</button>
+                            <button id="cancel-swap" class="btn btn-secondary btn-sm">Cancel</button>
+                        </div>
                     </div>
                 </aside>
 
@@ -108,17 +204,61 @@
                     <div id="options-grid" class="options-grid">
                         <!-- Options will be dynamically inserted here -->
                     </div>
+
+                    <!-- Draft Timeline -->
+                    <div class="timeline-section" id="timeline-section">
+                        <h3>Draft Timeline</h3>
+                        <div class="timeline-track" id="draft-timeline">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
                 </section>
             </div>
         </main>
     </div>
 
     <!-- Success Modal -->
-    <div id="success-modal" class="modal hidden">
+    <div id="success-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="success-title">
         <div class="modal-content success">
-            <div class="success-icon">✓</div>
-            <h2>Success!</h2>
+            <!-- Confetti container -->
+            <div id="confetti-container"></div>
+            <div class="success-icon">&#10003;</div>
+            <h2 id="success-title">Success!</h2>
+
+            <!-- Build Rating -->
+            <div class="build-rating" id="build-rating">
+                <span class="rating-tier" id="rating-tier"></span>
+                <span class="rating-label" id="rating-label"></span>
+            </div>
+
+            <!-- Score display with counter animation -->
+            <div class="score-counter">
+                <span class="score-counter-label">Final Score:</span>
+                <span class="score-counter-value" id="success-score">0.0</span>
+                <span class="score-counter-target">/ 7.0 required</span>
+            </div>
+
+            <!-- Personal best -->
+            <div id="personal-best" class="personal-best hidden">New personal best!</div>
+
             <p>Your front office build meets the performance standard!</p>
+
+            <!-- Why This Works -->
+            <div class="why-section" id="why-section">
+                <h3>Why This Works</h3>
+                <p id="why-explanation"></p>
+            </div>
+
+            <!-- Budget Efficiency -->
+            <div id="efficiency-section" class="efficiency-section hidden">
+                <p id="efficiency-message"></p>
+            </div>
+
+            <!-- Key Takeaway -->
+            <div class="takeaway-section">
+                <p><strong>Key Takeaway:</strong> In sports analytics, the best department isn't the one with the most expensive talent. It's the one where every person and tool makes the others more effective.</p>
+            </div>
+
             <div class="claim-code-section">
                 <label>Your Claim Code:</label>
                 <div class="claim-code-display">
@@ -132,28 +272,60 @@
                 </div>
                 <p class="copy-hint">Copy this code and submit it in the BOW Finish Form to earn XP.</p>
             </div>
+
+            <!-- Build counter & replayability -->
+            <div class="replayability-section">
+                <p id="build-counter"></p>
+                <p id="next-tier-hint" class="next-tier-hint"></p>
+            </div>
+
+            <!-- Challenge Mode Prompt -->
+            <div id="challenge-prompt" class="challenge-prompt hidden">
+                <p>Think you're good? Try a <strong>Challenge Mode</strong> from the start screen.</p>
+            </div>
+
             <button id="close-modal" class="btn btn-primary">Close</button>
         </div>
     </div>
 
     <!-- Failure Modal -->
-    <div id="failure-modal" class="modal hidden">
+    <div id="failure-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="failure-title">
         <div class="modal-content failure">
-            <div class="failure-icon">✕</div>
-            <h2>Not Quite There</h2>
-            <p>Your front office build doesn't meet the performance standard yet.</p>
-            <div class="hint-section">
+            <div class="failure-icon">&#10005;</div>
+            <h2 id="failure-title">Not Quite There</h2>
+
+            <!-- Score Proximity Bar -->
+            <div class="proximity-section" id="proximity-section">
+                <div class="proximity-bar-container">
+                    <div class="proximity-bar" id="proximity-bar"></div>
+                    <div class="proximity-threshold"></div>
+                    <div class="proximity-score-label" id="proximity-score-label"></div>
+                </div>
+                <div class="proximity-labels">
+                    <span>0.0</span>
+                    <span>7.0 (Target)</span>
+                </div>
+            </div>
+
+            <!-- Near miss message -->
+            <p id="near-miss-message" class="near-miss hidden"></p>
+
+            <p id="failure-subtitle">Your front office build doesn't meet the performance standard yet.</p>
+
+            <div class="hint-section" id="dynamic-hints">
                 <p><strong>Hints:</strong></p>
-                <ul>
-                    <li>Look for combos that work well together (synergies!)</li>
-                    <li>You need at least 2 people AND 1 tool</li>
-                    <li>Some picks conflict with each other - watch out!</li>
-                    <li>Try to discover secret combo bonuses 🏆</li>
-                    <li>Don't just pick the expensive items!</li>
+                <ul id="hint-list">
+                    <!-- Dynamically populated -->
                 </ul>
             </div>
             <button id="close-failure-modal" class="btn btn-primary">Try Again</button>
         </div>
+    </div>
+
+    <!-- Draft Ticker -->
+    <div id="draft-ticker" class="draft-ticker">
+        <div class="ticker-content" id="ticker-content"></div>
+        <button class="ticker-close" id="ticker-close" title="Hide ticker" aria-label="Hide draft ticker">&times;</button>
     </div>
 
     <footer>
