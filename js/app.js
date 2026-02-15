@@ -54,7 +54,7 @@ const elements = {};
 
 function cacheElements() {
     const ids = [
-        'intro-overlay', 'start-button', 'app', 'options-grid', 'selected-items',
+        'intro-overlay', 'start-button', 'back-to-home', 'app', 'options-grid', 'selected-items',
         'selected-count', 'remaining-budget', 'total-cost', 'budget-bar', 'budget-limit-display',
         'clear-button', 'evaluate-button', 'synergy-list', 'score-section',
         'base-impact', 'synergy-bonus', 'anti-synergy', 'final-score',
@@ -95,6 +95,7 @@ function init() {
 /** Attach all event listeners */
 function attachEventListeners() {
     elements.startButton.addEventListener('click', startActivity);
+    if (elements.backToHome) elements.backToHome.addEventListener('click', backToHome);
     elements.clearButton.addEventListener('click', handleClearAll);
     elements.evaluateButton.addEventListener('click', evaluateBuild);
     elements.copyButton.addEventListener('click', copyClaimCode);
@@ -191,6 +192,28 @@ function startActivity() {
 
     renderOptions();
     updateBudgetDisplay();
+}
+
+/** Back to home / intro screen */
+function backToHome() {
+    // Clear session state so intro overlay works fresh
+    localStorage.removeItem('frontOfficeDraft');
+    // Reset runtime state
+    clearAllSelections();
+    state.rivalEnabled = false;
+    state.rivalName = '';
+    state.challengeMode = 'standard';
+    state.activeBudgetLimit = CONFIG.BUDGET_LIMIT;
+    state.tickerMessages = [];
+    if (elements.tickerContent) elements.tickerContent.innerHTML = '';
+    // Hide game, show intro
+    elements.app.classList.add('hidden');
+    elements.rivalBadge.classList.add('hidden');
+    elements.challengeBadge.classList.add('hidden');
+    elements.introOverlay.classList.remove('hidden');
+    elements.introOverlay.classList.add('active');
+    // Re-render challenge modes (in case player has won since)
+    renderChallengeModes();
 }
 
 // ========================
